@@ -136,6 +136,6 @@ app.use('/uploads', uploads);
 
 // Listening on Port:5001
 //const port = process.env.port || 3000;
-const port = process.env.NODE_ENV || 5001;
+const port = process.env.PORT || 5001;
 app.set('port', port);
 app.listen(port, () => console.log(`Server started on port : ${port}`));
