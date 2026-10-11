@@ -1,3 +1,6 @@
+
+require('dotenv').config();
+
 const express = require('express');
 const exphbs = require('express-handlebars');
 const methodOverride = require('method-override');
@@ -25,11 +28,12 @@ require('./config/passport')(passport);
 
 // Connecting to MongoDB...
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/student-mgmt-sys', {
-    useNewUrlParser: true
-}).then(() => console.log('Connected to MongoDB Server...')).catch(err => console.error('Error occured connecting to MongoDB...', err));
 
-
+mongoose.connect(
+    process.env.MONGODB_URI || 'mongodb://localhost:27017/student-mgmt-sys'
+)
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 // Load Helpers
 const {
@@ -44,8 +48,7 @@ const {
     isLoggedIn
 } = require('./helpers/auth');
 
-// Express Handlebars Middleware.
-
+// Express Handlebars Middleware
 app.engine('handlebars', exphbs({
     defaultLayout: 'main',
     helpers: {
@@ -75,14 +78,15 @@ app.use(bodyParser.json());
 app.use(methodOverride('_method'));
 
 // Express Session
-app.set('trust proxy', 1) // trust first proxy
+app.set('trust proxy', 1);
+
 app.use(session({
-    secret: 'secret',
+    secret: process.env.SESSION_SECRET || 'development-only-secret',
     resave: true,
     saveUninitialized: true
 }));
 
-// Passport Middleware.
+// Passport Middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -109,7 +113,6 @@ app.get('/', [isLoggedIn], (req, res) => {
 
 // Dashboard Route
 app.get('/dashboard', [ensureAuthenticated], (req, res) => {
-    //console.log(req.originalUrl);
     res.render('dashboard', {
         title: 'Dashboard',
         breadcrumbs: true
@@ -118,7 +121,7 @@ app.get('/dashboard', [ensureAuthenticated], (req, res) => {
 
 app.get('/api', (req, res) => {
     res.render('api');
-})
+});
 
 app.get('/errors', (req, res) => {
     res.render('errors', {
@@ -134,8 +137,10 @@ app.use('/fee-management', fees);
 app.use('/api', api);
 app.use('/uploads', uploads);
 
-// Listening on Port:5001
-//const port = process.env.port || 3000;
+// Start Server
 const port = process.env.PORT || 5001;
 app.set('port', port);
-app.listen(port, () => console.log(`Server started on port : ${port}`));
+
+app.listen(port, () => {
+    console.log(`Server started on port: ${port}`);
+});
